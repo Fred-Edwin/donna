@@ -13,15 +13,32 @@ Any session that makes a structural call not already covered by
 
 ## Current phase
 
-**Phase 0 — Skeleton & source of truth.** Scaffolding the monorepo, no
-application logic yet. Next milestone: Phase 1 (core planning loop —
-Goals/Projects/Tasks, calendar, GitHub tracking, morning briefing, basic
-check-in, typed-only chat UI).
+**Phase 0 complete — Phase 1 starting.** `packages/db` is scaffolded with
+Donna's domain schema (Goals/Projects/Tasks/Clients/Deliverables/Sessions/
+GithubActivityLog/DerailmentEvents) and both apps depend on it as a
+workspace package. Phase 1 (core planning loop): live CRUD for Goals/
+Projects/Tasks in `apps/web`, agent tools to create/query them, morning
+briefing skill, typed-only chat UI wired to the agent.
 
 ---
 
 ## Log
 
+- **2026-09-19** — Scaffolded `packages/db` as a real workspace package
+  (`@donna/db`): `schema.ts` defines the eight domain tables sketched in
+  `ARCHITECTURE.md` section 2 (Client, Goal, Project, Task, Deliverable,
+  Session, GithubActivityLog, DerailmentEvent), plus a Drizzle client
+  (`index.ts`), migration config, and an initial generated migration
+  (`migrations/0000_sticky_squadron_sinister.sql`, not yet applied to any
+  live database). Both `apps/web` and `apps/agent` now list `@donna/db` as
+  a `workspace:*` dependency, but neither imports from it yet — CRUD UI and
+  agent tools are Phase 1 work. The Chat SDK's own tables
+  (`apps/web/lib/db/schema.ts`: User, Chat, Message_v2, Vote_v2, Document,
+  Suggestion, Stream) remain separate and unmerged, since they're
+  chat-persistence concerns, not Donna's application data. Reason: closes
+  out the one unfinished piece of Phase 0 — the shared schema package
+  `ARCHITECTURE.md` already described but that didn't exist in code.
+  Affects: none (code now matches the existing `ARCHITECTURE.md` section 2).
 - **[date]** — Chose Vercel Postgres + Drizzle as the persistence layer for
   all application data (Goals/Projects/Tasks/Clients/Sessions), shared via
   `packages/db` between `apps/web` and `apps/agent`. Reason: relational data
