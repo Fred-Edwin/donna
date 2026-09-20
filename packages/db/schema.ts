@@ -138,3 +138,33 @@ export const derailmentEvent = pgTable("DerailmentEvent", {
 });
 
 export type DerailmentEvent = InferSelectModel<typeof derailmentEvent>;
+
+export const stateLog = pgTable("StateLog", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  level: varchar("level", { enum: ["dip", "baseline", "peak"] })
+    .notNull()
+    .default("baseline"),
+  loggedAt: timestamp("loggedAt").notNull().defaultNow(),
+  note: text("note"),
+});
+
+export type StateLog = InferSelectModel<typeof stateLog>;
+
+export const sleepLog = pgTable("SleepLog", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  date: timestamp("date").notNull(),
+  hours: integer("hours").notNull(),
+  targetHours: integer("targetHours").notNull().default(6),
+  loggedAt: timestamp("loggedAt").notNull().defaultNow(),
+});
+
+export type SleepLog = InferSelectModel<typeof sleepLog>;
+
+export const mealLog = pgTable("MealLog", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  date: timestamp("date").notNull(),
+  description: text("description"),
+  loggedAt: timestamp("loggedAt").notNull().defaultNow(),
+});
+
+export type MealLog = InferSelectModel<typeof mealLog>;
