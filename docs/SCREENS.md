@@ -213,16 +213,41 @@ goals, with visible linkage down to the tasks serving them. This is the
 screen that answers "why am I doing this today?" — a capability the PRD
 requires Donna to have at any time (§4.3).
 
-**Contains:**
-- Goal list, grouped or filterable by horizon (long/short)
-- Progress indicator per goal
-- Linked-task references (which current tasks serve this goal)
+**Architecture — Desktop Master-Detail Split Cockpit:**
+On desktop (1440px), the Goals View unifies the Goals Directory and Goal
+Detail into a single split-pane view divided by a dark hairline:
+- **Left Column (~440px, Master):** Goals Ledger with horizon filtering
+  (All / Long / Short), status marks (square/dot duality), and quick velocity
+  bars. Selecting a goal highlights it and dynamically updates the right column.
+- **Right Column (Flex: 1, Detail Cockpit):** Deep operating cockpit for the
+  selected goal, negating the need for a separate standalone desktop detail
+  page. Contains:
+  1. *Header & Target Deadline:* Goal ID, full description, days remaining.
+  2. *Donna's Remarks:* Dedicated AI review module with pacing assessment,
+     blocker analysis, and actionable advice in Donna's authentic voice.
+  3. *Tasks & Hard Deadlines:* Directly linked active/completed tasks with
+     project badges, priority indicators, and explicit due dates.
+  4. *Connected Projects & GitHub Signal:* Live commit stream and repo health
+     linked to this goal's projects.
+
+**Mobile Architecture:**
+Because 375px cannot fit a two-column master-detail layout, mobile splits
+into two dedicated screens:
+1. `14 — Goals Directory (Mobile)`: Vertical master list with horizon filter.
+2. `14b — Goal Detail View (Mobile)`: Full-screen cockpit opened on tap.
 
 **States:**
-- Populated
-- Empty (no goals set yet)
+- Populated Master-Detail (Desktop, artboard "13 — Goals Directory (Desktop)")
+- Mobile Populated Directory (artboard "14")
+- Mobile Detail Cockpit (artboard "14b")
+- Universal Skeleton Loading & Error Boundaries (artboard "15")
 
-**Paper artboard:** *(not yet built)*
+**Paper artboards (completed this session):**
+- "13 — Goals Directory (Desktop)" — Master-Detail Split Cockpit. Left 440px ledger: horizon filter (ALL/LONG/SHORT), goal rows with status marks (filled dot = active, hollow rust square = stalled, hollow square = completed), velocity bars (7-day task completion count), and the `+ DRAFT` pill button. Right cockpit: G-01 selected, showing Module 1 (header vitals: PROGRESS `74%`, TASKS CLOSED `12/18`, LINKED PROJECTS `3`, LAST ACTIVITY), Module 2 (Donna's Read with pacing signal `+3 DAYS AHEAD`, honest prose, `NO BLOCKERS / 2 TASKS UNSCHEDULED` chips), Module 3 (3 tasks by urgency + `VIEW ALL TASKS →` link + `SHOWING 3 OF 18 TASKS` count), Module 4 (linked projects + 7-day GitHub commit grids; stalled project gets rust border treatment). Right cockpit is `overflow-y: auto` — fully scrollable.
+- "13b — Goal Tasks, Full List (Desktop)" — Full task workbench for a selected goal. Back-link breadcrumb to goal cockpit. Filter bar: OPEN/DONE/ALL segmented toggle, PRIORITY / PROJECT / DUE DATE dropdown filters, active filter chip (`PRIORITY: HIGH × `), SORT BY control. Task table with columns: TASK, PROJECT, PRIORITY, EST., DUE DATE (sorted, with arrow indicator), STATUS. Open tasks first (TODO, IN PROG, BLOCKED states all shown), then a `CLOSED · 12 TASKS` section divider, then completed rows (60% opacity + strikethrough). `NO DATE · UNSET` shown in rust for unscheduled tasks — surfaces Donna's "2 TASKS UNSCHEDULED" warning from the cockpit.
+- "14 — Goals Directory (Mobile)" — 375px single-column list. Status bar, `Goals` heading + `+ DRAFT` pill, ALL/LONG/SHORT horizon tabs, goal rows identical in structure to desktop ledger but full-width with chevron affordance indicating tap-to-detail navigation. No persistent nav chrome — matches "06 — App Shell (Mobile, Dashboard)"'s edge-swipe-drawer-only pattern; an earlier pass had added a bottom HOME/GOALS/PROJECTS/CHAT tab bar here, which was removed on 2026-09-20 as a correction (see `DECISIONS.md`) since it contradicted the locked no-bottom-nav decision.
+- "14b — Goal Detail View (Mobile)" — Full-screen cockpit on 375px. `← GOALS` back link, ID row, 18px goal headline, TARGET countdown, 3-column vitals strip (PROGRESS / TASKS / LAST ACTIVE — condensed from desktop's 4). Donna's Read module (compressed prose). Tasks with deadlines (2 shown, `VIEW ALL TASKS →` link, `SHOWING 2 OF 18`). Linked Projects section (donna-web active, donna-infra stalled with rust treatment). No persistent nav chrome (bottom tab bar removed 2026-09-20, same correction as "14").
+- "15 — System States: Skeletons & Error Templates" — Reference artboard. Three skeleton patterns: goal list row, cockpit header vitals, Donna's Read module — all using `--gray-100`/`--gray-50` step fills, hairlines preserved, no shimmer. Three error patterns: inline module error ("ANALYSIS UNAVAILABLE" — Donna's Read failed, data safe, retry link), full-screen error boundary ("SOMETHING WENT WRONG" with RETRY pill + GO TO DASHBOARD secondary, error code + timestamp in mono), empty state ("NO GOALS YET" + `+ DRAFT A GOAL` CTA). All errors use graphite neutrals (`--gray-700`), never red — per `INTERACTION_MODEL.md` composure rule.
 
 ---
 
@@ -232,36 +257,96 @@ requires Donna to have at any time (§4.3).
 separate from Goals because projects/clients are concrete deliverables with
 deadlines and external parties, not aspirational targets.
 
-**Contains:**
-- Project list/board (status, linked client if any)
-- Client risk flags (last-contact date, deliverable-due risk — PRD §4.4)
-- Detail view for a single project or client (drill-down)
+**Architecture — Desktop Master-Detail Split Cockpit:**
+On desktop (1440px), the Projects & Clients View uses the unified master-detail
+split cockpit established in the Goals View:
+- **Left Column (440px, Ledger):** Segmented tab toggle (`PROJECTS` / `CLIENTS`),
+  filter chips, and list rows with status dots (blue = active, hollow rust = stalled,
+  hollow square = completed), commit velocity bars, client tags, and weekly activity.
+  At-risk client alerts are highlighted with rust indicators.
+- **Right Column (Flex: 1, Operating Cockpit):** Deep contextual workbench for
+  the selected project or client:
+  1. *Project Cockpit (artboard "16"):* Header vitals (open tasks, closed this week,
+     7d commits, open PRs, last push), GitHub 7-day commit density signal, Donna's
+     Read analysis card (pacing, branch status, stale PR alerts), linked open tasks
+     with priority/due-date badges, and linked Goal progress card.
+  2. *Client Detail Drilldown (artboard "16b"):* Header with risk status, primary
+     contact, last-contact date, next deliverable countdown; Donna's Relationship
+     Health card; Deliverables milestone table; linked active/stalled projects.
+
+**Mobile Architecture:**
+Mobile (375px) adapts the view into dedicated, focused screens:
+- `17 — Projects & Clients (Mobile)`: Single-column list with tab switcher,
+  client risk badges, project velocity bars. No persistent nav chrome
+  (edge-swipe drawer only, per the locked mobile nav decision).
+- `17b — Project Detail View (Mobile)`: Full-screen project drilldown with back
+  navigation, header vitals, GitHub 7d stream, Donna's Read, and linked tasks.
+- `17c — Client Detail View (Mobile)`: Full-screen client relationship cockpit with
+  back navigation, header vitals, Donna's Read, deliverables stack, invoices &
+  contracts vault, KRA PIN tax dossier, and stakeholder touchpoint timeline.
 
 **States:**
-- Populated list/board
-- Project/client detail (drill-down)
-- Empty (no active projects/clients yet)
+- Populated Project Master-Detail (Desktop, artboard "16")
+- Populated Client Detail Drill-down (Desktop, artboard "16b")
+- Mobile Populated Directory (artboard "17")
+- Mobile Project Detail (artboard "17b")
+- Mobile Client Detail (artboard "17c")
+- Universal Skeletons, Errors & Empty States (artboard "18")
 
-**Paper artboard:** *(not yet built)*
+**Paper artboards (completed this session):**
+- "16 — Projects & Clients (Desktop)" — Master-Detail split cockpit. Left ledger: `PROJECTS` / `CLIENTS` segmented switcher, project rows with status marks, client tags, and 7-day activity bars. Right cockpit: `donna-web` selected showing header vitals, 7-day GitHub commit density grid, Donna's Read AI briefing with stale PR callouts, open tasks workbench, and linked goal summary card.
+- "16b — Client Detail View (Desktop)" — Dedicated client relationship cockpit for `Acme Corp` (at-risk client). Left nav rail context maintained (gradient runs full page height via `align-self: stretch`, not a fixed 960px); back breadcrumb; vitals (active projects, open deliverables, last contact 18d ago, next due Oct 1) demoted to mono/18px so they don't compete with the "Acme Corp" headline; Donna's Relationship Health card given hero weight (larger body copy, extra bottom margin) as the intended entry point; Deliverables list with risk badges; linked client projects. Flush/unboxed throughout (no per-section cards) with a **dark** (`var(--gray-900)`) vertical hairline dividing the primary column from the Legal & Tax Dossier / Stakeholders / Touchpoint Log rail, and matching dark horizontal hairlines between those three rail sections — corrected 2026-09-20 from an initial pass (built in a separate session) that used bordered white cards throughout, invented badge-pill colors, and light `--gray-200`-weight dividers; see `DECISIONS.md` for the full correction list. Artboard height is `fit-content` (1038px resolved), not clipped at a fixed 960px.
+- "17 — Projects & Clients (Mobile)" — 375px single-column layout. Tab switcher, project cards with health marks, commit velocity bars, client tags, and chevron navigation affordance. No persistent nav chrome (bottom tab bar removed 2026-09-20 as a correction).
+- "17b — Project Detail View (Mobile)" — 375px drilldown screen. Header vitals, GitHub 7-day activity bar, Donna's Read assessment card, and open tasks list. No persistent nav chrome (same 2026-09-20 correction).
+- "17c — Client Detail View (Mobile)" — 375px mobile client cockpit. Header vitals, Donna's Read, deliverables stack, invoices & contracts vault, KRA PIN tax dossier, and stakeholder touchpoint timeline. Flush/unboxed sections (same card cleanup as "16b"); `height: fit-content` so the Primary Stakeholder section (previously clipped at a fixed 960px) is fully visible; no persistent nav chrome (bottom tab bar removed 2026-09-20).
+- "18 — System States: Projects & Clients" — Reference artboard. Skeleton loading templates (project row, cockpit header, deliverable row); inline client risk alert banner; empty states for "No Projects Yet" and "No Clients Yet" with distinct CTAs; visual specification notes for risk derivation.
 
 ---
 
 ### 5. History/Review View
 
 **Purpose:** the feedback surface for the self-improvement loop (PRD §4.7).
-Lowest-frequency use, most data-dense screen — shows planned-vs-actual
-outcomes so Donna's recalibration is inspectable, not asserted.
+Answers "what did that day actually look like?" for any date, not just
+recent ones — a day archive, not just a scrolling log.
 
-**Contains:**
-- List of past days/weeks
-- Planned-vs-actual comparison (tasks, time estimates)
-- Weekly review summary (goal progress check, recalibration notes)
+**Architecture — Desktop Master-Detail Cockpit:** same pattern as Goals/
+Projects. **Left Ledger (440px):** a mini month calendar (any day clickable,
+not just the current week) with a dot per logged day — dot color signals
+derailment (rust) vs. normal (blue) — plus a scrollable week-list below it
+showing the week containing the selected day, each row's planned/actual/
+variance at a glance. **Right Cockpit:** full reconstruction of the selected
+day — (1) header vitals (planned/actual/variance/tasks/derailment status)
+plus a single day-shape bar with an actual-finish marker tick (not two
+stacked bars — see Decisions), (2) Donna's actual contemporaneous
+end-of-day note (or derailment check-in note, tone shifts per
+`INTERACTION_MODEL.md`) — not a synthesized weekly summary, (3) task diff
+table (planned vs. actual per task, status vocabulary: DONE / DONE, OVER /
+MOVED → date / DROPPED / BLOCKED), (4) GitHub activity that day, (5) sleep/
+meals/state instrument row, matching the Dashboard's Card H visual language.
+
+**Mobile Architecture:** two dedicated screens, same pattern as Goals/
+Projects — a directory (calendar + week list) and a full-screen day-detail
+sheet. Mobile's task table becomes stacked card rows (task name, then a
+compact planned/actual/status line) rather than a 4-column table, which
+doesn't fit at 375px.
 
 **States:**
-- Populated
-- Empty (no history yet — early in product use)
+- Populated Master-Detail (Desktop, artboard "19" — routine day example)
+- Derailment-day example (Desktop, artboard "19b" — same shell, Donna's tone
+  shifts to concern, GitHub activity drops off, task list shows the actual
+  pattern)
+- Mobile Populated Directory (artboard "20")
+- Mobile Day Detail (artboard "20b")
 
-**Paper artboard:** *(not yet built)*
+**Paper artboards (completed 2026-09-20):**
+- "19 — History/Review (Desktop)" — routine day (Sep 20/"today"). Ledger:
+  month calendar + week list. Cockpit: all 5 modules described above.
+- "19b — History/Review, Derailment Day (Desktop)" — Sep 15 selected,
+  demonstrating the derailment branch end-to-end: header shows `DERAILMENT:
+  CONFIRMED`, Donna's Read module retitled "DERAILMENT CHECK-IN" with
+  concern-toned copy, GitHub activity front-loaded then quiet after 11am,
+  personal-state mark shows a dip.
+- "20 — History Directory (Mobile)" / "20b — History Day Detail (Mobile)".
 
 ---
 
@@ -299,7 +384,21 @@ than existing as their own screen:
 
 - **Escalation states** (nudge tiers 1–3) — appear inside the Dashboard and
   Chat Panel. Tone/escalation logic lives in `INTERACTION_MODEL.md`; visual
-  treatment (badge scales) is in `DESIGN_PHILOSOPHY.md` §2.
+  treatment (badge scales) is in `DESIGN_PHILOSOPHY.md` §2. Full standalone
+  reference built 2026-09-20: **"21 — Escalation Vocabulary (Reference)"** —
+  all 3 tiers + derailment side by side (shape/color/copy-weight
+  progression), using the file's existing `--color-nudge-*`/
+  `--color-derailment` tokens for the first time. Dashboard Card F (High
+  Priority) was checked against it — found using ad hoc black-border
+  styling with no relation to the vocabulary; a tier-3 treatment was tried
+  and then explicitly reverted per Fred's call (didn't look good in
+  practice) — Card F keeps its original unbordered look. Chat Panel's
+  message bubbles were redesigned same session (not escalation-specific,
+  but touches the same artboard family): real left/right two-sided chat
+  bubbles (both speakers filled — Fred blue, Donna warm gray — asymmetric
+  rounded corners, tight same-speaker grouping) replacing the old flat
+  full-width message blocks. New artboard: **"11h — Chat Panel, Populated
+  Conversation (Desktop)"**.
 - **Derailment mode** — a distinct conversational branch (PRD §4.8), not a
   4th escalation tier. Appears inside Chat Panel and as a Dashboard
   replan-offer state.
@@ -308,26 +407,64 @@ than existing as their own screen:
 
 ---
 
-## Open gaps — not yet scoped, need a decision
+## Login (built 2026-09-20 — replaces Onboarding)
 
-These are not in the PRD's view list at all. Flagging them here so they're
-decided deliberately rather than forgotten:
+**Purpose:** authentication gate, decided against onboarding entirely —
+single-tenant product (Fred only), so no account creation or first-run
+wizard. GitHub/calendar connections happen conversationally through chat
+when first needed, not a dedicated setup flow. Given the login page is also
+the first thing anyone outside Fred would see (e.g. showing the product to
+others), it doubles as a showcase: split layout, product screenshot +
+feature copy on one side, a minimal name/password form in a bordered card
+on the other.
 
-- **Onboarding / first-run setup** — connecting GitHub, connecting calendar,
-  entering initial goals/projects. No screen currently owns this. Open
-  question: dedicated onboarding screens, or handled conversationally
-  through the Chat Panel?
-- **Settings** — notification preferences, connection management (GitHub/
-  calendar), escalation sensitivity tuning. Not mentioned anywhere in PRD
-  §7. Needs a home before Phase 4 (push notifications) if not sooner.
-- **Push notification templates** — not a screen, but a real design
-  artifact (lock-screen/banner appearance) needed for PRD's nudge delivery
-  (§4.6, §6). Easy to forget until Phase 4.
+**Paper artboards:**
+- "22 — Login (Desktop)" — dark showcase panel (headline, 3 feature
+  callouts, tilted/floating Dashboard screenshot) + light form panel with
+  the login card.
+- "22c — Login (Mobile)" — condensed dark brand/headline band, then the
+  same card treatment for the form, feature callouts below.
+
+## Push Notifications (designed 2026-09-20)
+
+Not a screen — lock-screen/banner delivery for the PRD's nudge tiers
+(§4.6, §6) so Donna can reach Fred when the app is closed. Content/tone
+mirrors the Escalation Vocabulary (see below); the OS fixes the app icon
+per-app, so tier distinction is carried through wording/weight only, not
+icon color (an earlier draft tried per-tier icon colors — not feasible on
+real iOS/Android notifications, reverted).
+
+**Paper artboard:** "23 — Push Notifications (Reference)" — 4 lock-screen
+mockups (tier 1/2/3 + derailment), matching artboard 21's copy.
+
+## Settings — deliberately cut (2026-09-20)
+
+Considered for connection management, escalation sensitivity tuning, and
+notification preferences (per the original open-gap note below), but Fred
+decided none of it needs a screen — single-tenant product, so this config
+is managed directly in code/DB rather than through UI. No Paper artboard;
+revisit only if a concrete need for user-facing settings UI appears later.
 
 ---
 
 ## Changelog
 
+- **2026-09-20** — History/Review View fully designed (Phase 0.5) — the
+  last of the five core views. Four artboards: "19"/"19b" (desktop
+  master-detail, routine + derailment day examples), "20"/"20b" (mobile
+  directory + day detail). Also this session: three hairline tokens added
+  (`--hairline-main`, `--hairline-sec`, `--hairline-row`) plus
+  `--border-card` and `--hairline-on-dark`, applied file-wide per Fred's
+  request (scoped to existing raw-hex stragglers, not the pre-existing
+  `--gray-200`/`--gray-900` usages elsewhere, which stay a separate future
+  pass); Escalation Vocabulary standalone reference built ("21"); Chat
+  Panel message bubbles redesigned to real two-sided bubbles ("11h"); Login
+  page designed for both breakpoints ("22", "22c") replacing Onboarding,
+  including a bordered form card treatment; Push notification reference
+  built ("23"); Settings scope explicitly cut (no screens, code/DB only).
+  See `DECISIONS.md` 2026-09-20 entries for full reasoning per item.
+- **2026-09-20** — Projects & Clients View fully designed (Phase 0.5). Six artboards completed: "16" (desktop master-detail cockpit), "16b" (desktop high-density client detail view), "17" (mobile directory), "17b" (mobile project detail), "17c" (mobile client detail), "18" (skeletons, error alert, empty states). Key design decisions: (1) Master-detail split cockpit on desktop; (2) Redesigned 16b Client Detail into high-density 2-column cockpit (68% primary / 32% dossier) with KRA PIN / Tax ID, legal entity, registration number, billing address, payment terms, stakeholder directory, touchpoint log, and invoices/contracts vault; (3) Added dedicated mobile Client Detail View ("17c") matching the full desktop dossier on 375px; (4) Restrained rust color strictly to surgical risk tags (<3% surface area); (5) Backed by schema extensions for Client (`taxPin`, `legalName`, `billingAddress`, `paymentTerms`, `currency`, `primaryContactName`, `primaryContactEmail`, `primaryContactPhone`) and new `ClientDocument` table.
+- **2026-09-20** — Goals View fully designed (Phase 0.5). Five artboards completed: "13" (desktop master-detail cockpit), "13b" (goal tasks full list with filters), "14" (mobile directory), "14b" (mobile detail), "15" (skeleton + error templates). Key design decisions: (1) cockpit task module shows 3 tasks max + `VIEW ALL TASKS →` to 13b, keeping cockpit as situational awareness rather than task manager; (2) no global cross-column header — master ledger heading + nav rail active state provide sufficient context; (3) right cockpit scrollable (`overflow-y: auto`); (4) `goal.targetDate` and `goal.progressPct` added to schema. See `DECISIONS.md` 2026-09-20 entry for full audit log.
 - **2026-09-19** — Initial version, consolidating PRD §7's brief view list
   into full purpose/contents/states, and flagging onboarding/settings/
   notifications as undecided gaps.

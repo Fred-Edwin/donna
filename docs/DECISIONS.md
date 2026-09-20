@@ -36,17 +36,262 @@ Paper file. See the 2026-09-20 entries below for the voice architecture
 vocabulary reference, and open follow-ups (shader color/motion tuning,
 real-build wiring).
 
-**Not yet designed** (remaining Phase 0.5 scope, per `BUILD_PLAN.md`):
-Goals view, Projects & Clients view, History/Review view. The escalation
-visual vocabulary has an initial reference pass (see 2026-09-19 entry
-below) but hasn't been extended beyond the Chat Panel's inline examples —
-see `docs/SCREENS.md` for each remaining view's purpose/contents/states
-spec. Phase 1 (core planning loop) does not start until all of Phase 0.5's
-mockups are approved, per `BUILD_PLAN.md`'s exit criteria.
+**Goals View and Projects & Clients View — signed off by Fred, fully
+designed for this pass.** Goals: artboards "13" (desktop master-detail
+cockpit), "13b" (goal tasks workbench), "14" (mobile directory), "14b"
+(mobile detail), and "15" (system states). Projects & Clients: artboards
+"16" (desktop master-detail cockpit), "16b" (desktop client detail view),
+"17" (mobile directory), "17b" (mobile project detail), "17c" (mobile
+client detail), and "18" (system states). Projects & Clients required a
+follow-up correction pass — the Client Detail View (16b/17c) had been
+built in a separate session and drifted from the card/spacing/nav
+standard the other views established; see the 2026-09-20 correction entry
+below for what was fixed before sign-off.
+
+**History/Review View is done for this pass** — desktop master-detail
+(artboards "19" routine day, "19b" derailment day) and mobile (artboards
+"20" directory, "20b" day detail). This was the last of the five core views
+from PRD §7. See the 2026-09-20 entries below for the day-archive
+architecture (calendar + week-list ledger, six-section cockpit), the
+hairline token system, Escalation Vocabulary reference ("21"), Chat Panel
+bubble redesign ("11h"), Login page ("22"/"22c"), Push notifications ("23"),
+and the Settings-cut decision.
+
+**Phase 0.5 core-view scope is now complete** (all five PRD §7 views
+designed across both breakpoints). Remaining before Phase 1 per
+`BUILD_PLAN.md`'s exit criteria: none currently known — check with Fred
+before starting Phase 1 in case further design refinement is wanted.
 
 ---
 
 ## Log
+
+- **2026-09-20** — History/Review View designed end-to-end (Phase 0.5),
+  closing out Phase 0.5's five-core-view scope, plus several follow-on
+  decisions made in the same session:
+  (1) **Reframed from "scrolling log" to "day archive"** after Fred's
+  feedback that an initial week-scoped task-diff-table design was too
+  limited — couldn't reach any date, only the current week. Settled
+  structure: **master-detail cockpit** (same pattern as Goals/Projects) —
+  left ledger is a **mini month calendar** (any day clickable, dot per
+  logged day, dot color signals derailment) with a **scrollable week list**
+  below it for the week containing the selected day; right cockpit
+  reconstructs the **whole day**, not just tasks — header vitals, day-shape
+  bar, Donna's actual contemporaneous end-of-day note (not a synthesized
+  summary), task diff table, GitHub activity, and sleep/meals/state
+  instrument. Two examples built: "19" (routine day) and "19b" (derailment
+  day, Donna's tone shifts to concern per `INTERACTION_MODEL.md`, GitHub
+  activity visibly drops off, task list shows the actual pattern). Mobile:
+  "20" (directory) / "20b" (day detail, task table becomes stacked cards
+  instead of a 4-column table — doesn't fit at 375px, confirmed with Fred
+  before building). Reason: Fred correctly identified that reachability
+  (any date) is a different requirement from content (what a day shows) —
+  the first draft solved neither well. Affects: `docs/SCREENS.md` (History/
+  Review section rewritten).
+  (2) **Hairline color system tokenized**: Fred noticed secondary hairlines
+  were inconsistent hex values scattered across the file and asked for
+  three named tiers. Added five tokens — `--hairline-main` (`#171613`, the
+  one structural ledger/cockpit divide), `--hairline-sec` (`#BBBBBB`,
+  section/module dividers), `--hairline-row` (`#EFEDE6`, repeated-row
+  dividers), `--border-card` (`#C6C6C6`, 4-sided card borders — kept
+  distinct from `--hairline-sec` per Fred's explicit call), and
+  `--hairline-on-dark` (`#FFFFFF14`, nav rail). Applied file-wide to
+  existing raw-hex/near-miss usages of these exact patterns. **Deliberately
+  did not touch** the pre-existing `--gray-200`/`--gray-900` tokens used
+  elsewhere (Dashboard, Chat Panel, calendar grids, ~200+ nodes) — those
+  serve many unrelated purposes beyond hairlines and reclassifying them
+  wasn't part of Fred's ask; flagged as a separate future pass if wanted.
+  Affects: any new screen adding a divider/border should reach for one of
+  these five tokens rather than a raw hex value.
+  (3) **Escalation Vocabulary given a standalone reference** ("21 —
+  Escalation Vocabulary (Reference)"): tier 1/2/3 + derailment shown side
+  by side, finally putting the file's existing `--color-nudge-*`/
+  `--color-derailment` tokens (defined earlier, unused until now) into
+  practice. Checked against Dashboard Card F (High Priority), found it used
+  ad hoc black-border styling unrelated to the vocabulary; a tier-3 border
+  treatment was tried and then **explicitly reverted** — Fred said it
+  looked bad in practice, so Card F keeps its original unbordered look.
+  Lesson: a design being "more consistent with the system" doesn't
+  guarantee it looks better — verify before assuming consistency is the
+  fix. Affects: `docs/SCREENS.md`.
+  (4) **Chat Panel message bubbles redesigned**: old treatment was flat,
+  full-width, no left/right distinction — read as stacked notification
+  cards, not a conversation. Fred asked for a more "Instagram-style" feel.
+  New pattern (artboard "11h — Chat Panel, Populated Conversation"): both
+  speakers get real filled bubbles (Fred blue/right, Donna warm-gray/left —
+  Fred's initial "no fill for Donna" idea was overridden by Fred wanting
+  both sides to read as bubbles), asymmetric rounded corners (sharp corner
+  on the tail side), max-width not full-width, tight vertical grouping for
+  consecutive same-speaker messages. Not yet retrofitted into the other
+  Chat Panel states (listening/thinking/speaking, voice-orb overlay) —
+  those still use the old block style; do that in a follow-up pass.
+  (5) **Onboarding replaced by a Login page**: Fred confirmed this is a
+  single-tenant product (himself only) — no account creation or first-run
+  wizard needed; GitHub/calendar connections stay conversational, handled
+  through chat when first needed, per the option already flagged open in
+  `SCREENS.md`. The login page doubles as a product showcase (Fred's
+  request: since others might see it, it should look premium and make the
+  product's quality obvious) — split layout, dark panel with headline/
+  feature copy/tilted Dashboard screenshot, light panel with a bordered
+  login card (name + password, single-tenant so no real auth-provider
+  complexity needed). A layered-multi-screen showcase variant (3 screens
+  fanned with depth) was attempted per Fred's request to compare directions,
+  but Paper's transform/overflow model fought a reliable implementation
+  (scaled clones keep their full untransformed layout box, breaking
+  clipping) — abandoned after Fred said the original single-screenshot
+  version was "good enough," rather than switching to a flat-image
+  compositing workaround. Artboards: "22" (desktop), "22c" (mobile, dark
+  brand band + card, condensed). Follow-up fix: the login card initially
+  floated fields on bare background with no border — added a proper
+  bordered/shadowed card wrapper on Fred's request, on both breakpoints.
+  (6) **Push notifications designed** ("23 — Push Notifications
+  (Reference)"): lock-screen mockups for the 3 nudge tiers + derailment,
+  content/tone matching artboard 21. First draft tried recoloring the app
+  icon per tier — caught as unrealistic (OS notification icons are fixed
+  per-app, not per-alert) before finalizing; corrected to a fixed brand-blue
+  icon with tier distinction carried through wording/weight only.
+  (7) **Settings cut entirely** — Fred doesn't want a settings screen for
+  connection management / escalation tuning / notification prefs (the three
+  things flagged as open in `SCREENS.md`); he'll manage that config directly
+  in code/DB since it's a single-user product. No Paper artboard exists or
+  is planned; revisit only if a real need for user-facing settings UI shows
+  up later. Affects: `docs/SCREENS.md` (open-gaps section resolved).
+
+- **2026-09-20** — Projects & Clients View critiqued and corrected against
+  the design system, then **signed off by Fred as fully designed**. The
+  Client Detail View (desktop "16b", mobile "17c") had been built by a
+  different model in a separate session and drifted from the settled
+  standard in ways the other core views (Dashboard, Chat/Voice Panel)
+  don't have — logging the corrections here so future sessions don't
+  reintroduce them. (1) **Removed pervasive card-boxing**: nearly every
+  section (Donna's Read, Deliverables, Invoices, Legal & Tax Dossier,
+  Stakeholders, Touchpoint Log, linked repos) was individually wrapped in
+  a bordered/rounded/shadowed white card — direct violation of
+  `DESIGN_PHILOSOPHY.md` rule 1 and the "cards used sparingly" precedent
+  set during the Daily Dashboard build. Flattened all of it to flush
+  sections separated by whitespace and mono labels, matching the
+  Dashboard's Secondary Rail treatment (verified via its real JSX: zero
+  bordered boxes anywhere on that screen, not even Card F). (2) **Replaced
+  invented status-pill colors** (peach fills, assorted grays, ad hoc blue
+  tints on AT RISK / PENDING / DUE / PAID / SIGNED / ON FILE / PRIMARY /
+  BILLING badges) with the existing vocabulary: plain muted text for
+  neutral status, the real rust/escalation tokens only where genuinely
+  at-risk. Left functional tap-target pills (recommended-action buttons,
+  the Slack contact pill, the copyable KRA PIN field) filled, since those
+  are real affordances, not decorative status. (3) **Row-level card
+  nesting removed** from the deliverables list and the two repo panels —
+  hairline `border-top` dividers between rows instead, matching the
+  invoices table's already-correct pattern. (4) **Fixed content clipping**:
+  both artboards were fixed at 960px with `overflow: clip`, cutting off
+  real content (the repo commit grids on desktop, the Primary Stakeholder
+  section on mobile). Switched to `height: fit-content` per Paper's own
+  guidance — desktop resolved to 1038px, mobile un-clipped fully. Checked
+  every other Goals/Projects/Clients artboard for the same issue; none of
+  the others were actually overflowing, so no further changes needed
+  there. (5) **Removed bottom tab bars** from five mobile artboards ("14"
+  Goals Directory, "14b" Goal Detail, "17" Projects & Clients, "17b"
+  Project Detail, "17c" Client Detail) — the other model had added a
+  4-item HOME/GOALS/PROJECTS/CHAT tab bar, which directly contradicts the
+  locked decision in `SCREENS.md` (mobile has no persistent nav chrome at
+  all; navigation is edge-swipe-drawer only, confirmed against the
+  canonical "06 — App Shell (Mobile, Dashboard)" artboard, which has zero
+  visible nav elements). (6) **Fixed the desktop nav rail** on "16b": the
+  navy gradient didn't match `DESIGN_PHILOSOPHY.md` §3.5's documented
+  value (a visibly different, less saturated gradient had been used) and
+  the avatar circle was a flat `--blue-500` fill instead of the documented
+  `--blue-300→--blue-500` gradient — both corrected to the exact spec'd
+  values. Separately, fixing the `fit-content` clipping bug broke the
+  rail's full-height stretch (it collapsed to just its own content height,
+  leaving flat white below it) — resolved by setting the rail's height
+  explicitly to the artboard's resolved height with `align-self: stretch`,
+  since Paper's engine doesn't propagate flex stretch through a
+  `fit-content`-sized parent the way standard CSS does; worth remembering
+  for any future artboard using this same fit-content-to-fix-clipping
+  pattern. (7) **Visual hierarchy pass** on the desktop Client Detail View
+  after Fred flagged it as dense/cluttered despite liking the layout: added
+  a **dark** (`var(--gray-900)`, not the usual `--gray-300`/`--gray-200`
+  hairline weight) `border-left` divider between the primary column and
+  the rail, matching the same dark-hairline treatment Goals View's cockpit
+  already used; added matching **dark** `border-top` hairlines between the
+  rail's own three sections (Legal & Tax Dossier / Stakeholders / Touchpoint
+  Log), since those three have near-identical content shape and were
+  visually blurring together without a divider; gave "Donna's Read" real
+  hero weight (body copy 13.5px→15px, extra bottom margin) as the intended
+  entry point; demoted the header stat row (Active Projects/Open
+  Deliverables/Outstanding/Next Due) from 22px Geist Sans to 18px Geist
+  Mono so it stops competing with the "Acme Corp" headline, and matches the
+  Dashboard's own header-stat treatment (mono, smaller than the headline).
+  Deliberately did **not** add hairlines to the primary column's own
+  sections (Deliverables/Invoices/Linked Repos) — each already has a
+  distinct content shape (prose vs. list vs. table vs. grid) doing the
+  segmentation work whitespace-only; hairlines there would flatten "Donna's
+  Read"'s hero weight back down to the same level as everything else.
+  Reason: Fred asked for a close critique against the established standard
+  before signing off, since the density/card problems weren't obvious from
+  a first look — the fixes needed to be traced to their exact source (JSX
+  inspection of the real Dashboard, not just eyeballing) rather than
+  guessed. Affects: `DECISIONS.md` (this entry); no `SCREENS.md` content
+  change needed since the *content/logic* decisions from the original
+  2026-09-20 build-out entries below remain correct — this was a visual/
+  structural correction pass, not a re-design. **Fred has signed off: the
+  Projects & Clients View is fully designed for this pass.**
+
+- **2026-09-20** — Projects & Clients View designed end-to-end (Phase 0.5):
+  (1) **Master-Detail Split Cockpit architecture on desktop** (artboard "16"):
+  Left 440px ledger with `PROJECTS` / `CLIENTS` segmented switcher, commit
+  velocity bars, client tags, and weekly activity. Right flex-1 cockpit showing
+  header vitals, 7-day GitHub commit density grid, Donna's Read AI briefing with
+  stale PR callouts, open tasks workbench, and linked goal summary card.
+  (2) **High-Density Client Detail View (artboard "16b")**: Two-column split
+  cockpit (68% primary / 32% dossier sidebar) replacing sparse vertical stack.
+  Added: legal entity name, KRA PIN / Tax ID (`P051239841Z`), registration number,
+  billing address, payment terms (`Net 15`), primary stakeholder contacts (email +
+  Slack), and communication cadence touchpoint log with date/channel tracking.
+  (3) **Documentation & Invoices Vault**: Added invoice ledger (`INV-2026-005` due,
+  `INV-2026-004` paid) with amounts, due dates, and status tags; contract agreements
+  (`MSA-2026-ACME`), and KRA withholding tax certificate.
+  (4) **Color & Contrast restraint**: Eliminated rust border and card background
+  bleed. Confined rust (`--rust-500` / `#C4551C`) strictly to the exact risk
+  badge (`● AT RISK`) and overdue touchpoint indicators (<3% surface area).
+  All structural cards re-anchored to clean `#FFFFFF` with `#E4E1D8` borders and
+  graphite text for maximum contrast and composure.
+  (5) **Schema additions in `packages/db/schema.ts`**: Extended `Client` table with
+  `legalName`, `taxPin`, `billingAddress`, `paymentTerms`, `currency`,
+  `primaryContactName`, `primaryContactEmail`, `primaryContactPhone`, and
+  `billingEmail`. Added `clientDocument` table (`id`, `clientId`, `type`,
+  `title`, `docNumber`, `amountCents`, `currency`, `status`, `issueDate`,
+  `dueDate`, `fileUrl`).
+  (6) **Mobile artboards ("17" directory, "17b" project detail, "17c" client detail)**
+  and **System States ("18" skeletons, inline client risk alert, empty states)**.
+
+- **2026-09-20** — Goals View designed end-to-end (Phase 0.5):
+  Desktop unified as a **Master-Detail Split Cockpit** (artboard "13").
+  Five pre-design decisions locked before Paper work began:
+  (1) **`goal.targetDate` added** (`timestamp`, nullable) — backs the countdown.
+  (2) **`goal.progressPct` added** (`integer` 0–100, nullable) — agent-writable progress.
+  (3) **Progress vital display format** — shown as `74%` when set; fallback to task ratio.
+  (4) **Velocity bar definition** — 7-day completed tasks derived at query time.
+  (5) **Stall signal derivation for goals** — rust square mark when no tasks active in 5d.
+  (6) **"Milestones" replaced with "LINKED PROJECTS"** — derived from task foreign keys.
+  (7) **Cockpit task module displays 3 tasks max + `VIEW ALL TASKS →`** to dedicated
+  workbench artboard "13b" with multi-attribute filtering.
+  Desktop artboards "13", "13b"; mobile artboards "14", "14b"; system states "15".
+  Key structural decisions: (1) **Master-Detail unifies list and detail on
+  desktop**, negating the need for a separate standalone desktop detail page
+  while providing instant, zero-context-switching inspection of any goal.
+  (2) **Mobile preserves two dedicated screens** ("14" directory list and
+  "14b" full-screen detail sheet) due to 375px space constraints. (3) **Divided
+  by a dark hairline** (`1px solid var(--gray-900)`) between the Left Ledger
+  (~440px) and Right Cockpit (flex: 1). (4) **Strict typography discipline**:
+  pure `Geist` for display/copy and `Geist Mono` for all codes, IDs, dates,
+  and metrics. (5) **Color restraint**: monochrome graphite neutrals, single
+  vibrant accent (`--blue-500` / `--blue-800`), surgical rust reserved only
+  for stalled warnings. (6) **Donna's Remarks module**: prominent dedicated
+  AI analysis card in the cockpit providing pacing assessment, blocker
+  identification, and strategic guidance in Donna's authentic, composed voice.
+  (7) **Universal system state templates**: skeleton loading and error
+  boundaries decided as reusable templates on artboard "15", rather than
+  drawing redundant artboards per view.
 
 - **2026-09-20** — Chat/Voice Panel designed end-to-end (Phase 0.5): 7
   desktop artboards ("11" empty, "11c" listening, "11f" thinking, "11d"

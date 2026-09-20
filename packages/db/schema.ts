@@ -21,11 +21,20 @@ import {
  */
 
 export const client = pgTable("Client", {
+  billingAddress: text("billingAddress"),
+  billingEmail: text("billingEmail"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
+  currency: varchar("currency", { length: 3 }).notNull().default("USD"),
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   lastContactDate: timestamp("lastContactDate"),
+  legalName: text("legalName"),
   name: text("name").notNull(),
+  paymentTerms: text("paymentTerms"),
+  primaryContactEmail: text("primaryContactEmail"),
+  primaryContactName: text("primaryContactName"),
+  primaryContactPhone: text("primaryContactPhone"),
   riskFlag: boolean("riskFlag").notNull().default(false),
+  taxPin: text("taxPin"),
 });
 
 export type Client = InferSelectModel<typeof client>;
@@ -35,11 +44,24 @@ export const goal = pgTable("Goal", {
   description: text("description").notNull(),
   horizon: varchar("horizon", { enum: ["long", "short"] }).notNull(),
   id: uuid("id").primaryKey().notNull().defaultRandom(),
+  /**
+   * Donna's contextual progress assessment (0–100). Agent-writable during
+   * briefings and goal reviews. Intentionally separate from the raw
+   * tasks-done/tasks-total ratio (which is derived at query time) — Donna
+   * can set this to reflect milestone weight, not just task count.
+   * Null = not yet assessed.
+   */
+  progressPct: integer("progressPct"),
   status: varchar("status", {
     enum: ["active", "completed", "abandoned"],
   })
     .notNull()
     .default("active"),
+  /**
+   * Optional target completion date. Backs the "TARGET: NOV 30 (68D REMAINING)"
+   * countdown in the Goal Detail cockpit header. Null = no target set.
+   */
+  targetDate: timestamp("targetDate"),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
 
@@ -167,4 +189,27 @@ export const mealLog = pgTable("MealLog", {
   loggedAt: timestamp("loggedAt").notNull().defaultNow(),
 });
 
-export type MealLog = InferSelectModel<typeof mealLog>;
+export const clientDocument = pgTable("ClientDocument", {
+  amountCents: integer("amountCents"),
+  clientId: uuid("clientId")
+    .notNull()
+    .references(() => client.id),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+  docNumber: text("docNumber"),
+  dueDate: timestamp("dueDate"),
+  fileUrl: text("fileUrl"),
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  issueDate: timestamp("issueDate"),
+  status: varchar("status", {
+    enum: ["draft", "sent", "paid", "overdue", "executed"],
+  })
+    .notNull()
+    .default("sent"),
+  title: text("title").notNull(),
+  type: varchar("type", {
+    enum: ["invoice", "contract", "receipt", "tax_cert"],
+  }).notNull(),
+});
+
+export type ClientDocument = InferSelectModel<typeof clientDocument>;
