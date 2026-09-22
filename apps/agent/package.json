@@ -16,8 +16,10 @@
   },
   "dependencies": {
     "@donna/db": "workspace:*",
+    "@openrouter/ai-sdk-provider": "^3.1.0",
     "@vercel/connect": "2.2.0",
     "ai": "^7.0.105",
+    "drizzle-orm": "^0.45.2",
     "eve": "^0.62.0",
     "zod": "4.5.4"
   },
@@ -28,5 +30,4 @@
   "engines": {
     "node": "24.x"
   }
-
 }

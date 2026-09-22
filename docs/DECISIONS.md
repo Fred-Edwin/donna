@@ -13,6 +13,40 @@ Any session that makes a structural call not already covered by
 
 ## Current phase
 
+**Phase 1 (core loop), Slice A DONE (2026-09-22).** Typed chat is confirmed
+working end-to-end in a real browser: `apps/web` → `withEve()`/
+`useEveAgent()` → `apps/agent` (eve) → OpenRouter → DeepSeek V4.1 Flash →
+streamed back and rendered. Donna replied in character, referencing her
+real Phase 1 capabilities per `instructions.md`. See the log entries below
+for the full path to get here (Chat SDK teardown, local Postgres, and the
+model-provider saga) and what's still owed as cleanup debt.
+
+**Model provider: OpenRouter, not AI Gateway.** `agent/agent.ts` uses
+`@openrouter/ai-sdk-provider`'s `createOpenRouter({ apiKey })` with model
+`deepseek/deepseek-v4.1-flash` (1,048,576-token context window) as a direct
+AI SDK `LanguageModel`, reading `OPENROUTER_API_KEY` from
+`apps/agent/.env.local`. This supersedes the AI Gateway path attempted
+first in this same session — Gateway auth (`eve link`, pulling a
+`VERCEL_OIDC_TOKEN`) worked correctly, but Fred's Vercel account is on the
+free/hobby tier, which the Gateway rejected for `openai/gpt-5.6-luna-fast`
+("Free tier users do not have access to this model"). Rather than add
+billing to unlock Gateway's catalog, Fred chose to use the OpenRouter key
+he already had. Two things worth remembering for future sessions: (1) a
+direct-provider `LanguageModel` (non-Gateway) has no automatic context-window
+metadata — eve's compaction system needs `modelContextWindowTokens` set
+explicitly on `defineAgent()`'s top-level config, or the dev server refuses
+to boot at all ("Cannot compile agent compaction because the primary
+compaction trigger model ... does not have known AI Gateway context window
+metadata"). (2) The `VERCEL_OIDC_TOKEN` pulled by `eve link` is still in
+`apps/agent/.env.local` and harmless to leave — switching back to a Gateway
+model later needs no new linking step. `ARCHITECTURE.md`'s mention of AI
+Gateway as the model routing layer is now aspirational/deployment-time
+rather than the actual local-dev path; revisit before Phase 1 wraps whether
+that doc should be updated to name OpenRouter as the current provider, or
+whether Gateway gets revisited once there's a paid Vercel plan.
+
+---
+
 **Phase 0.5 (design) in progress.** `packages/db` is scaffolded with
 Donna's domain schema (Goals/Projects/Tasks/Clients/Deliverables/Sessions/
 GithubActivityLog/DerailmentEvents/StateLog/SleepLog/MealLog) and both apps
@@ -62,9 +96,168 @@ designed across both breakpoints). Remaining before Phase 1 per
 `BUILD_PLAN.md`'s exit criteria: none currently known — check with Fred
 before starting Phase 1 in case further design refinement is wanted.
 
+**Phase 1 scope extended (2026-09-22, not yet built)** to include document
+ingestion (brain dumps/pasted docs → inferred goals/projects/tasks/clients,
+propose-then-confirm) and a new `observations` table as the catch-all for
+anything that doesn't fit the rigid schema. See the 2026-09-22 log entry
+below for full reasoning. No code written yet — schema addition only
+(`packages/db/schema.ts`), plus doc updates across `ARCHITECTURE.md`,
+`BUILD_PLAN.md`, `TOOLS_REGISTRY.md`, `SKILLS_REGISTRY.md`.
+
 ---
 
 ## Log
+
+- **2026-09-22** — Phase 1 Slice A closed out: typed chat confirmed working
+  end-to-end in a real browser (see "Current phase" above for the model
+  provider decision). Fixes made completing the Chat SDK teardown started
+  in the kickoff entry below: (1) **Two independent Drizzle migrators
+  sharing one Postgres instance collided.** `packages/db/migrate.ts` and
+  `apps/web/lib/db/migrate.ts` both defaulted to the same
+  `drizzle.__drizzle_migrations` tracking table, so the second migrator to
+  run saw a row count it mistook for "already applied" and silently
+  skipped creating `apps/web`'s `User` table. Fixed by giving each an
+  explicit, distinct `migrationsSchema` (`drizzle_donna` for `packages/db`,
+  `drizzle_web` for `apps/web`) — worth remembering any time a third
+  migrator gets added against the same local dev database. (2)
+  **Regenerated `apps/web/lib/db/migrations/0000_initial.sql`** from the
+  trimmed `schema.ts` (User only) after confirming with Fred — the
+  original migration still contained `CREATE TABLE` statements for the six
+  removed Chat SDK tables (Chat/Message_v2/Vote_v2/Document/Suggestion/
+  Stream), which would have recreated them on a fresh database despite
+  `schema.ts` no longer defining them. Local dev DB was fully reset
+  (`DROP SCHEMA public CASCADE`) and both migrators re-run clean; nothing
+  of value was lost since Phase 1 had no real data yet. (3) **Bumped
+  `apps/web`'s `ai` package** from `7.0.15` to `^7.0.105` to satisfy
+  `eve@0.62.0`'s peer dependency — without this, two incompatible copies of
+  `ai`'s types got installed side by side, breaking typechecking on
+  unrelated files (`instrumentation.ts`, `components/ai-elements/
+  reasoning.tsx`) that import AI SDK types. (4) **`next.config.ts`
+  composition order matters**: `withBotId()` must wrap the plain config
+  object first, with `withEve(..., { eveRoot: "../agent" })` applied last/
+  outermost — the reverse order fails to typecheck because `withEve`
+  always returns a config *function*, and `withBotId`'s function-input form
+  expects an optional second parameter that `withEve`'s stricter
+  `{ defaultConfig }` context shape doesn't satisfy. (5) Also added
+  `AUTH_SECRET` to `apps/web/.env.local` (was entirely unset, unrelated to
+  this session's changes — Auth.js requires it and had never been
+  configured since the project was scaffolded) and rebuilt
+  `app/(auth)/layout.tsx` to drop its reference to the deleted stock
+  "Chatbot" marketing preview panel (replaced with an empty placeholder,
+  `TODO`-marked for the real Login artboards "22"/"22c" in a later slice).
+  Affects: `packages/db/migrate.ts`, `apps/web/lib/db/migrate.ts`,
+  `apps/web/lib/db/migrations/` (regenerated), `apps/web/next.config.ts`,
+  `apps/web/package.json` (`ai` bump), `apps/web/.env.local`,
+  `apps/web/app/(auth)/layout.tsx`.
+
+- **2026-09-22** — Phase 1 Slice A kickoff: three structural calls made
+  while wiring `apps/web` to real Donna data and the real `apps/agent`
+  (eve) brain, discovered mid-session once the actual shape of the
+  existing Chat SDK scaffold was investigated (not assumed from file names).
+  (1) **Local dev database is Postgres via Docker, not cloud.** Started a
+  `donna-postgres` container (`postgres:16-alpine`, named volume
+  `donna_postgres_data`), added `POSTGRES_URL` to both `apps/web/.env.local`
+  and `apps/agent/.env.local` (eve's dev server auto-loads its own
+  `.env.local`, confirmed via eve's CLI reference docs — `apps/web` and
+  `apps/agent` are separate processes and each needs the var). Production
+  Postgres choice (`ARCHITECTURE.md` §2) is unchanged. Generated and applied
+  migration `0001_slim_bloodstrike.sql`, bringing `StateLog`/`SleepLog`/
+  `MealLog`/`ClientDocument`/`Observation` (previously only in `schema.ts`,
+  never migrated) into the live dev DB — 13 tables now exist. Note: the
+  `postgres` MCP tool available in this environment is wired to an unrelated
+  project's database (V3-RMS), not Donna's — don't use it for Donna
+  verification; use `docker exec donna-postgres psql` or a Drizzle script
+  instead. (2) **`apps/web` switches to eve's real chat wiring
+  (`withEve()` + `useEveAgent()`), replacing the Chat SDK template's own
+  `streamText`-in-`apps/web` chat route entirely** — confirmed with Fred
+  after explaining the fork plainly (see this session's chat). This was
+  already implied by `ARCHITECTURE.md` (`apps/agent` is Donna's real brain)
+  but the existing code did the opposite (a second, fake chatbot lived
+  directly in `apps/web`, and `apps/agent` was unused). Investigation
+  found the swap's blast radius is real but bounded: `useChat` (AI SDK) is
+  called in exactly one file, `apps/web/hooks/use-active-chat.tsx`. (3)
+  **Chat SDK template features not part of Donna's designed scope are being
+  dropped, not ported** — multi-chat history/sidebar (`chatId`-based
+  routing, `/chat/[id]`), message voting, chat visibility (public/private),
+  the model selector (model choice belongs to `apps/agent/agent/agent.ts`
+  now), and the entire "artifacts" side-panel document/code/sheet/image
+  editor system. None of these were ever part of the PRD or the approved
+  Paper designs — Phase 0.5 locked "one persistent chat panel," not a
+  multi-thread history browser or a document-editing surface. Investigation
+  (an Explore agent grepping the actual dependency graph, not guessing from
+  file names) found `app/(chat)/layout.tsx` unconditionally renders the old
+  `AppSidebar` + `ChatShell` above every route in the `(chat)` group
+  (including where Donna's dashboard needs to live) and that the artifacts
+  system's server-side tool-calling (`createDocument`/`updateDocument`
+  tools) lives inside the very `api/chat/route.ts` being retired — so
+  keeping artifacts would have meant reimplementing that tool-calling in
+  eve for a feature nobody asked for. Retiring instead: `api/chat`,
+  `api/messages`, `api/history`, `api/vote`, `api/models`, `api/suggestions`,
+  `api/document` routes; `components/chat/{app-sidebar,sidebar-history,
+  sidebar-history-item,message-actions-vote-parts,visibility-selector}.tsx`;
+  `hooks/use-chat-visibility.ts`; `components/ai-elements/model-selector.tsx`;
+  `lib/ai/{models,entitlements}.ts` (pending final confirmation nothing else
+  depends on them); all of `apps/web/artifacts/**` and its consumer
+  components (`artifact.tsx`, `document-preview.tsx`, `version-footer.tsx`,
+  etc.). Chat SDK's own `lib/db/schema.ts` message/vote/document tables
+  become redundant for message content once eve owns session persistence —
+  final call on what (if anything) survives there to be logged once Slice A
+  finishes. Reason: keeping any of this un-asked-for machinery around adds
+  maintenance surface and design debt with no product justification — none
+  of it appears in `PRD.md` §7's key views or any of the 47 approved Paper
+  artboards. Affects: `ARCHITECTURE.md` (no change needed, this confirms
+  the existing §1 split), this file (scope of Slice A's teardown), and
+  `apps/web`'s file tree substantially shrinks before Donna's own
+  dashboard/goals/projects UI (Slice C) gets built on top of what's left.
+
+- **2026-09-22** — Extended Phase 1 scope to cover document ingestion and
+  added the `observations` table, per Fred's request to (1) hand Donna raw
+  documents/brain dumps and have her infer goals/projects/tasks/clients
+  from them rather than entering everything by hand, and (2) give her a way
+  to record things that don't fit the rigid Goal/Project/Task/Client schema
+  and to flag her own ideas for how she could better help him, without
+  either forcing a bad fit or being able to alter the schema unilaterally.
+  Two structural calls made:
+  (1) **Document ingestion is propose-then-confirm, not autonomous-write.**
+  Fred initially asked for "as much freedom as possible" for Donna to write
+  to the database. Pushed back on this specifically for inference-from-
+  unstructured-text, since brain dumps are the input most likely to produce
+  a hallucinated client or a duplicate goal under different wording — those
+  errors are expensive to clean up silently and compound if unreviewed.
+  Landed on a two-tool split: `stage_ingested_entities` (extracts, never
+  writes) and `commit_staged_entities` (writes only what Fred approves).
+  This is an MVP default, not a permanent ceiling — revisit toward more
+  autonomy once extraction quality is proven in real use, but don't loosen
+  it without a logged decision. (2) **New `observations` table** (`content`,
+  `sourceType`: brain_dump/conversation/inference, `status`: new/reviewed/
+  promoted/dismissed, loose `relatedEntityType`/`relatedEntityId`, not a
+  real foreign key) as the bounded escape hatch for anything — from
+  document ingestion or ordinary conversation — that doesn't cleanly map to
+  Goal/Project/Task/Client/Deliverable. This is also how Donna's own
+  self-improvement noticing ("I think I should be tracking something that
+  doesn't exist yet") gets recorded: she can log an observation flagging
+  the gap, but she cannot modify `packages/db/schema.ts` herself — a real
+  schema change is still a human session, reviewed and logged here, per
+  this project's existing hard rule (`CLAUDE.md` — "never invent a new data
+  shape"). Explicitly rejected: giving Donna direct schema-write ability at
+  runtime, even framed as "self-improvement" — the existing hard rule
+  exists precisely so the data model doesn't drift from unreviewed runtime
+  judgment calls, and that reasoning applies just as much to an agent
+  editing its own schema as to inventing one ad hoc for a single tool.
+  Reason: Fred wants Donna to be able to build out his world mostly
+  unassisted from raw material, and wants her genuinely proactive about
+  improving herself — but unreviewed writes from inference and unreviewed
+  schema changes are two different risk profiles than reviewed writes to an
+  existing schema, and needed to be scoped deliberately rather than granted
+  as blanket "freedom." Affects: `packages/db/schema.ts` (`observation`
+  table added), `ARCHITECTURE.md` (new section 7, renumbers old 7→8),
+  `BUILD_PLAN.md` (Phase 1 scope + exit criteria extended; Phase 3 notes
+  observations feeding self-improvement review), `TOOLS_REGISTRY.md` (new
+  Document ingestion & observations section: `stage_ingested_entities`,
+  `commit_staged_entities`, `log_observation`, `list_observations`, all
+  `planned`), `SKILLS_REGISTRY.md` (new `ingest_document.md`, `planned`).
+  No migration generated yet — schema change is logged but not applied to a
+  live database (none exists yet; Phase 1 hasn't started).
 
 - **2026-09-20** — History/Review View designed end-to-end (Phase 0.5),
   closing out Phase 0.5's five-core-view scope, plus several follow-on

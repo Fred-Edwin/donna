@@ -76,10 +76,21 @@ to match what's approved here, not to a fresh interpretation of the PRD.
 - Build `morning_briefing` skill v1 — goals + tasks only, no calendar or
   GitHub signal yet (those arrive in Phase 2).
 - Wire typed chat (no voice yet) to the agent.
+- **Document ingestion (added 2026-09-22 — see `DECISIONS.md`):** build
+  `stage_ingested_entities` / `commit_staged_entities` tools and the
+  `ingest_document.md` skill so Fred can hand Donna raw documents/brain
+  dumps and have her infer goals/projects/tasks/clients from them, plus the
+  `observations` table + `log_observation`/`list_observations` tools as the
+  catch-all for anything that doesn't fit the rigid schema. Default
+  behavior is propose-then-confirm — Donna stages what she extracted, Fred
+  reviews and approves before it commits — not silent autonomous writes.
+  See `ARCHITECTURE.md` section 7 and `TOOLS_REGISTRY.md`.
 
 **Exit criteria:** Fred can create/edit goals, projects, and tasks by hand in
 the dashboard, or ask Donna to do it via chat, and get a real morning
-briefing built from real data.
+briefing built from real data. Fred can also paste a document or brain dump
+into chat and have Donna propose a set of goals/projects/tasks/clients (plus
+observations for anything that doesn't fit) for Fred to review and commit.
 
 ---
 
@@ -120,6 +131,12 @@ a second system for a need that hasn't appeared.
 - `log_session_outcome`, `get_historical_accuracy` tools.
 - `weekly_review` and `self_improvement_review` skills — recalibrate time
   estimates and nudge timing/tone from real planned-vs-actual data.
+- `self_improvement_review` also surfaces unreviewed `observations` (see
+  Phase 1 addition, `ARCHITECTURE.md` section 7) — rows Donna logged
+  because they didn't fit Goal/Project/Task/Client. This is how a real
+  pattern ("Fred keeps mentioning X, maybe this needs real tracking") gets
+  surfaced to Fred as a candidate schema change. Donna proposes; a human
+  session still makes and logs the actual schema decision.
 
 **Dependency:** this phase needs real session history to exist and be
 meaningful. Don't start it until Phase 1/2's core loop has been in daily use

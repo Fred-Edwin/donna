@@ -1,5 +1,6 @@
 import { withBotId } from "botid/next/config";
 import type { NextConfig } from "next";
+import { withEve } from "eve/next";
 
 const basePath = process.env.IS_DEMO === "1" ? "/demo" : "";
 
@@ -51,4 +52,4 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
 };
 
-export default withBotId(nextConfig);
+export default withEve(withBotId(nextConfig), { eveRoot: "../agent" });

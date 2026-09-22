@@ -25,6 +25,7 @@ re-derive it inside the skill file itself; reference it.
 | `self_improvement_review.md` | planned | called by `weekly_review.md` (not directly scheduled) | `get_historical_accuracy`, `log_session_outcome` | Recalibrates time estimates, nudge timing/tone based on what's worked (PRD 4.7) |
 | `derailment_response.md` | planned | triggered by pattern detection, not a fixed schedule | `get_activity_signal`, `get_github_activity`, `list_tasks` | Distinct lower-key branch (PRD 4.8): detect pattern, shift tone, offer to replan the day |
 | `client_risk_check.md` | planned (may absorb `check_client_risk` tool logic) | called by `morning_briefing.md`; possibly owned by the client subagent | client tools | Flags deliverables at risk, contact gaps (PRD 4.4) |
+| `ingest_document.md` | planned | Fred pastes/uploads a document or brain dump in chat | `stage_ingested_entities`, then `commit_staged_entities` after Fred reviews | Reads unstructured text, infers candidate goals/projects/tasks/clients, stages them, and asks Fred to confirm before writing. Anything that doesn't fit the schema becomes an `observation` instead of being forced or dropped. See `DECISIONS.md` 2026-09-22. |
 
 ---
 
@@ -39,3 +40,13 @@ re-derive it inside the skill file itself; reference it.
 - If you find a skill needs tone/escalation judgment not covered by
   `INTERACTION_MODEL.md`, **add it there**, not inline in the skill file.
   Tone consistency across skills is the entire point of keeping it separate.
+- `ingest_document.md` defaults to propose-then-confirm (stage extracted
+  entities, Fred approves the batch) rather than writing directly. Don't
+  quietly change this to autonomous-write without a logged decision — see
+  `DECISIONS.md` 2026-09-22 for the reasoning (hallucination/duplication
+  risk from unstructured input).
+- `self_improvement_review.md` may surface `observations` with
+  `status: new` as candidates for "Donna thinks she should track something
+  new" — but promoting an observation into an actual schema change is a
+  human decision (a real session, logged in `DECISIONS.md`), never
+  something a skill does unilaterally at runtime.

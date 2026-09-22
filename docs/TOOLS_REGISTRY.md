@@ -53,6 +53,15 @@ exist as far as the next session is concerned.
 | `log_client_interaction` | planned | client_id, date, note? | Updates last_contact_date | `clients` |
 | `check_client_risk` | planned (may fold into a skill instead) | client_id | Flags overdue deliverables/contact gaps | `clients`, `deliverables` |
 
+## Document ingestion & observations
+
+| Tool | Status | Input (rough) | What it does | Touches |
+|---|---|---|---|---|
+| `stage_ingested_entities` | planned | source_text, source_type | Reads raw text (brain dump, pasted doc), extracts candidate goals/projects/tasks/clients, and candidate observations for anything that doesn't fit those tables. Does NOT commit — returns a staged batch for Fred to review. | none (staging only, no write) |
+| `commit_staged_entities` | planned | staged batch id/ids, approve/reject per item | Writes Fred-approved items from a staged batch into their real tables (or into `observations` for anything not promoted to a full entity) | `goals`, `projects`, `tasks`, `clients`, `observations` |
+| `log_observation` | planned | content, source_type, related_entity_type?, related_entity_id? | Directly logs a note that doesn't fit the rigid schema — used in normal conversation, not just document ingestion (e.g. Donna notices a pattern worth flagging) | `observations` |
+| `list_observations` | planned | status filter | Surfaces unreviewed/promoted observations, e.g. for a weekly review pass | `observations` |
+
 ## Self-improvement
 
 | Tool | Status | Input (rough) | What it does | Touches |
@@ -75,3 +84,14 @@ exist as far as the next session is concerned.
   table (don't leave both a tool and a skill claiming the same job).
 - If a new tool's job overlaps >50% with an existing one, extend the
   existing tool's input schema rather than adding a near-duplicate.
+- `stage_ingested_entities` / `commit_staged_entities` are deliberately split
+  in two — extraction never writes directly. See `DECISIONS.md` 2026-09-22
+  for why (unreviewed autonomous writes from unstructured text are the
+  highest-risk case for hallucinated/duplicate entities). Revisit the
+  propose-then-confirm default once extraction quality is proven in real
+  use, but don't collapse the two tools into one without a deliberate
+  decision logged here.
+- `log_observation` is NOT how Donna proposes schema changes. She can flag
+  that something doesn't fit and note it in `observations` — she cannot
+  alter `packages/db/schema.ts` herself. A real schema change is still a
+  human-session decision. See `ARCHITECTURE.md` section 7.

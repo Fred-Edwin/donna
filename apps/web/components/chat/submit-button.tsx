@@ -1,8 +1,7 @@
 "use client";
 
+import { LoaderCircleIcon } from "lucide-react";
 import { useFormStatus } from "react-dom";
-
-import { LoaderIcon } from "@/components/chat/icons";
 
 import { Button } from "../ui/button";
 
@@ -26,7 +25,7 @@ export function SubmitButton({
 
       {pending || isSuccessful ? (
         <span className="absolute right-4 animate-spin">
-          <LoaderIcon />
+          <LoaderCircleIcon className="size-4" />
         </span>
       ) : null}
 

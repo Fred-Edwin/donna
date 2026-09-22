@@ -19,7 +19,10 @@ const runMigrate = async () => {
   console.log("Running migrations...");
 
   const start = Date.now();
-  await migrate(db, { migrationsFolder: "./migrations" });
+  await migrate(db, {
+    migrationsFolder: "./migrations",
+    migrationsSchema: "drizzle_donna",
+  });
   const end = Date.now();
 
   console.log("Migrations completed in", end - start, "ms");

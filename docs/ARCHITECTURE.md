@@ -88,6 +88,12 @@ import from here. **Never redefine a table shape inline in either app.**
   window_start, window_end, fetched_at
 - **`derailment_events`** — id, date, detected_at, signal_summary_json,
   fred_confirmed (boolean), recovery_action, resolved_at
+- **`observations`** — id, content, source_type (`brain_dump` |
+  `conversation` | `inference`), status (`new` | `reviewed` | `promoted` |
+  `dismissed`), related_entity_type/related_entity_id (nullable, loose —
+  not a foreign key), created_at. The catch-all for anything Donna notices
+  that doesn't fit the other tables. See section 8 below and `DECISIONS.md`
+  2026-09-22.
 
 This is a first pass. Do not treat it as final or exhaustive — extend it as
 real tools are built, and keep this list in sync with `schema.ts` itself.
@@ -164,7 +170,37 @@ separate mini-project, not a tool living purely in `apps/agent`:
 
 ---
 
-## 7. Deployment
+## 7. Document ingestion & the observation table
+
+Fred wants to hand Donna raw material — brain dumps, pasted documents,
+notes — and have her infer Goals/Projects/Tasks/Clients from it, rather
+than entering everything by hand. Two rules govern how this works:
+
+- **Propose, then confirm — not silent autonomous writes.** Donna extracts
+  candidate entities from the source text and stages them; Fred reviews and
+  approves the batch before anything commits to Goal/Project/Task/Client.
+  This is not a permanent restriction — it's the default until extraction
+  quality is proven — but it's the MVP behavior. Reason: unstructured
+  brain-dump text is exactly the input most likely to produce a hallucinated
+  client or a duplicate goal under different wording, and those errors are
+  expensive to clean up silently. See `DECISIONS.md` 2026-09-22.
+- **Not everything fits the rigid schema, and that's fine.** When Donna
+  reads a document and finds something that doesn't cleanly map to Goal/
+  Project/Task/Client/Deliverable, she writes it to the `observations` table
+  (section 2) rather than forcing a bad fit or dropping it. This is also
+  where a self-improvement-driven realization ("I think I should be tracking
+  X, which doesn't exist yet") gets logged — Donna can flag that she thinks
+  a new pattern is needed, but she does not alter `packages/db/schema.ts`
+  herself. A real schema change still goes through a session, gets reviewed,
+  and gets logged in `DECISIONS.md`, per this project's hard rule. The
+  `observations` table is the pressure-release valve that makes that
+  boundary workable in practice — instead of Donna needing to either force
+  everything into the existing shape or invent structure unilaterally, she
+  has a bounded place to say "flagging this for Fred."
+
+---
+
+## 8. Deployment
 
 - `apps/web` and `apps/agent` are each ordinary Vercel projects.
 - `apps/agent`'s sandbox is Vercel Sandbox in production (swaps automatically

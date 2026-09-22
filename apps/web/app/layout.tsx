@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -7,9 +8,8 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
-  description: "Next.js chatbot template using the AI SDK.",
-  metadataBase: new URL("https://chat.vercel.ai"),
-  title: "Next.js Chatbot Template",
+  description: "Donna — Fred's personal AI assistant.",
+  title: "Donna",
 };
 
 export const viewport = {
@@ -77,7 +77,17 @@ export default function RootLayout({
           <SessionProvider
             basePath={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/auth`}
           >
-            <TooltipProvider>{children}</TooltipProvider>
+            <TooltipProvider>
+              {children}
+              <Toaster
+                position="top-center"
+                theme="system"
+                toastOptions={{
+                  className:
+                    "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
+                }}
+              />
+            </TooltipProvider>
           </SessionProvider>
         </ThemeProvider>
       </body>
