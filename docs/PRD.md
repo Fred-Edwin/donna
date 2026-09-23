@@ -151,10 +151,19 @@ Fred's productivity is not flat — some days are genuinely strong, others get d
 
 ### Morning briefing
 
-- Summarizes where Fred stands on long-term and short-term goals.
-- Presents the day's prioritized task list and time-blocked schedule.
-- Flags any client or deadline risks.
-- Closes with genuine encouragement — brief, not performative.
+- **Fred-initiated, not scheduled.** Donna never opens the day with an
+  unprompted greeting — she waits for Fred to start the conversation, then
+  surfaces the plan. Exception: a late-morning tier-1-style nudge if Fred
+  hasn't opened chat by some point (see `INTERACTION_MODEL.md` and
+  `DECISIONS.md` 2026-09-23). The plan itself is still prepared the evening
+  before (anticipation trait) — only the delivery is pull, not push.
+- Surfaces where Fred stands on long-term and short-term goals, and the
+  day's prioritized tasks/schedule, conversationally rather than as a
+  delivered list — negotiated live, including reprioritizing and informal
+  targets Fred sets in the moment.
+- Flags any client or deadline risks as part of that conversation.
+- Encouragement is real and reactive to what Fred brings (energy, targets
+  he sets), not a scripted closing line.
 
 ### Daytime check-ins
 
@@ -241,7 +250,10 @@ Donna's value is running real logic (checking goals, tasks, GitHub, calendar) be
 - **`skills/`** — reusable playbooks: morning briefing generation, weekly review/self-improvement, goal-to-task linkage logic, nudge escalation logic.
 - **`tools/`** — typed functions: create/update task, update schedule, log client interaction, query GitHub activity, query calendar.
 - **`connections/`** — GitHub, calendar (auth handled by Eve, no manual token management).
-- **`schedules/`** — morning briefing trigger, periodic check-in triggers, end-of-day summary trigger, weekly review trigger.
+- **`schedules/`** — evening morning-briefing *prep* trigger (plan is
+  assembled ahead of time, not delivered on a schedule — see section 5),
+  late-morning fallback nudge if Fred hasn't opened chat, periodic check-in
+  triggers, end-of-day summary trigger, weekly review trigger.
 - **`subagents/`** — candidate for a dedicated client-tracking subagent, isolated from the main planning loop.
 - **`channels/`** — web/PWA chat channel, plus a voice channel (STT/TTS) added without altering the rest of Donna's brain.
 

@@ -13,6 +13,46 @@ Any session that makes a structural call not already covered by
 
 ## Current phase
 
+**2026-09-23** — Wired `docs/VOICE_EXAMPLES.md`'s patterns into
+`apps/agent/agent/instructions.md` as a concrete "how you talk" section
+(banned phrases, the answer-then-dump anti-pattern, confirm-with-implication
+for direct commands, no-forced-pivot for open conversation). Previously the
+example bank existed only as documentation Donna herself never saw —
+`instructions.md` pointed at `INTERACTION_MODEL.md`'s policy layer but had
+no few-shot content. Deliberately scoped to the patterns relevant at
+current Phase 1 (morning briefing, direct commands, open conversation) —
+did not pull in check-in/derailment/weekly-review examples verbatim, since
+`instructions.md` already states those aren't active yet ("Not yet
+available: proactive check-ins/nudges... derailment detection") and
+including their voice patterns risked implying the behavior itself was
+live. Full bank remains referenced by path for when those phases land.
+Reason: examples only change model behavior if they're actually in context
+— a doc referencing another doc referencing tone rules is too indirect.
+Affects: `apps/agent/agent/instructions.md` only; no schema or tool change.
+
+**2026-09-23** — Morning briefing flipped to Fred-initiated, not
+Donna-initiated. Previously modeled (and still described in the PRD's
+pillar table) as Donna surfacing an unprompted "Good morning" message; Fred
+wants to open the conversation himself, casually ("morning, what's going
+on today"), then negotiate the day's plan live rather than receive it as a
+delivered list — including setting informal targets ("let's see how fast
+you can get this done") that Donna should meet with real energy, not
+scripted enthusiasm. The prepared plan (anticipation trait) still exists
+ahead of time — only the delivery mechanism changed, from unprompted push
+to conversational pull. One exception preserved: if Fred hasn't opened
+chat by late morning, Donna does send an unprompted message, but it reuses
+the existing tier-1 nudge register (low-pressure, references the real
+plan) rather than a distinct scripted "good morning" greeting — no new
+escalation path was added. Reason: Fred found the scripted-greeting
+pattern exactly the chatbot energy this whole tone-engineering effort is
+trying to avoid. Affects: `INTERACTION_MODEL.md` (conversation type #1 corrected — moved out
+of the Donna-initiated bucket into Fred-initiated, description rewritten),
+`docs/VOICE_EXAMPLES.md` (rewritten as a multi-turn negotiated exchange),
+`PRD.md` section 5 and the `schedules/` bullet (both described morning
+briefing as scheduled/delivered — corrected to Fred-initiated pull with a
+late fallback nudge; the evening-before prep itself is unaffected).
+
+
 **Phase 1 (core loop), Slice A DONE (2026-09-22).** Typed chat is confirmed
 working end-to-end in a real browser: `apps/web` → `withEve()`/
 `useEveAgent()` → `apps/agent` (eve) → OpenRouter → DeepSeek V4.1 Flash →

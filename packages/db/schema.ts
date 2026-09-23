@@ -83,6 +83,13 @@ export type Project = InferSelectModel<typeof project>;
 
 export const task = pgTable("Task", {
   actualMinutes: integer("actualMinutes"),
+  /**
+   * Set when status transitions to "done" (see updateTask). Backs 7-day
+   * completion velocity (Goals ledger, artboard "13") — createdAt alone
+   * can't answer "when was this finished." Null until completed; cleared
+   * back to null if status moves off "done". See DECISIONS.md 2026-09-22.
+   */
+  completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   dueDate: timestamp("dueDate"),
   estimatedMinutes: integer("estimatedMinutes"),
@@ -102,6 +109,7 @@ export const task = pgTable("Task", {
   })
     .notNull()
     .default("todo"),
+  title: text("title").notNull(),
 });
 
 export type Task = InferSelectModel<typeof task>;
@@ -213,3 +221,42 @@ export const clientDocument = pgTable("ClientDocument", {
 });
 
 export type ClientDocument = InferSelectModel<typeof clientDocument>;
+
+/**
+ * Catch-all for anything Donna notices that doesn't cleanly fit Goal/
+ * Project/Task/Client/Deliverable — the escape hatch so document ingestion
+ * and everyday conversation don't force a bad fit into the rigid schema, or
+ * get silently dropped. Donna writes rows here; she does not alter the
+ * schema itself. See DECISIONS.md 2026-09-22 entry.
+ */
+export const observation = pgTable("Observation", {
+  /**
+   * Distinguishes durable facts about Fred himself (preferences, people in
+   * his life, biographical context — surfaced in future chats regardless
+   * of project) from task/project-scoped notes. Null = unclassified, same
+   * as existing rows before this field. See DECISIONS.md 2026-09-22 entry
+   * (proactive extraction during free-form chat).
+   */
+  category: varchar("category", {
+    enum: ["preference", "relationship", "biographical", "project_note"],
+  }),
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  /**
+   * Loose, untyped pointer — e.g. "project", "client" — not a foreign key,
+   * since the related entity may not exist yet or may span several.
+   */
+  relatedEntityId: uuid("relatedEntityId"),
+  relatedEntityType: text("relatedEntityType"),
+  sourceType: varchar("sourceType", {
+    enum: ["brain_dump", "conversation", "inference"],
+  }).notNull(),
+  status: varchar("status", {
+    enum: ["new", "reviewed", "promoted", "dismissed"],
+  })
+    .notNull()
+    .default("new"),
+});
+
+export type Observation = InferSelectModel<typeof observation>;
